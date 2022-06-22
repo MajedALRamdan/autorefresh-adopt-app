@@ -1,3 +1,5 @@
+import 'dart:html';
+
 import 'package:adopt_app/models/pet.dart';
 import 'package:adopt_app/providers/pets_provider.dart';
 import 'package:adopt_app/widgets/pet_card.dart';
@@ -28,22 +30,30 @@ class HomePage extends StatelessWidget {
                 ),
               ),
             ),
-            ElevatedButton(
-              onPressed: () {
-                Provider.of<PetsProvider>(context, listen: false).getPets();
-              },
-              child: const Text("GET"),
-            ),
-            GridView.builder(
-                shrinkWrap: true,
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: MediaQuery.of(context).size.width /
-                      (MediaQuery.of(context).size.height),
-                ),
-                physics: const NeverScrollableScrollPhysics(), // <- Here
-                itemCount: pets.length,
-                itemBuilder: (context, index) => PetCard(pet: pets[index])),
+            FutureBuilder(
+                future: context.read<PetsProvider>().getFirstPets(),
+                builder: ((context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  } else if (snapshot.error != null) {
+                    return Text("Networr error");
+                  } else {
+                    List<Pet> pets =
+                        Provider.of<PetsProvider>(context, listen: false).pets;
+                    return GridView.builder(
+                        shrinkWrap: true,
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          childAspectRatio: MediaQuery.of(context).size.width /
+                              (MediaQuery.of(context).size.height),
+                        ),
+                        physics:
+                            const NeverScrollableScrollPhysics(), // <- Here
+                        itemCount: pets.length,
+                        itemBuilder: (context, index) =>
+                            PetCard(pet: pets[index]));
+                  }
+                })),
           ],
         ),
       ),
